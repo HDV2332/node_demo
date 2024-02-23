@@ -1,37 +1,39 @@
-/**
- * SCHEMA belike:
- * struture:
- * {
- *  id: [Primry key] Number (Auto increase),
- *  address: String,
- *  address2: String,
- *  district: String,
- *  city_id: Number,
- *  postal_code: Varchar,
- *  phone: Varchar,
- *  location: Geometry,
- *  last_update: Timestamp,
- * }
- */
-
 import { ERRORS } from "../definitions/errors";
 import { IAddress } from "../definitions/interfaces/address.interface";
 const database = require("./db");
 
-const AddressContrustor = function (address: IAddress) {};
+const AddressContrustor = function (this: any, address: IAddress) {
+  this.address_id = address.address_id;
+  this.address = address.address;
+  this.address2 = address.address2;
+  this.district = address.district;
+  this.city_id = address.city_id;
+  this.postal_code = address.postal_code;
+  this.phone = address.phone;
+  this.location = address.location;
+  this.last_update = address.last_update;
+};
 
 AddressContrustor.create = (newAddress: IAddress, result: any) => {
-  const _sql = "INSERT INTO adress SET ?";
-  database.query(_sql, newAddress, (err: any, res: any) => {
-    if (err) {
-      result(err, null);
-      return;
+  let _address = JSON.parse(JSON.stringify(newAddress));
+  const _geometry = _address.location || {};
+  delete _address.location;
+
+  const _sql = "INSERT INTO address SET location = POINT(?, ?), ? ";
+  database.query(
+    _sql,
+    [_geometry.latitude, _geometry.longtitude, _address],
+    (err: any, res: any) => {
+      if (err) {
+        result(err, null);
+        return;
+      }
+      result(null, {
+        ...newAddress,
+        id: new Date().getTime(),
+      });
     }
-    result(null, {
-      ...newAddress,
-      id: new Date().getTime(),
-    });
-  });
+  );
 };
 
 AddressContrustor.getAll = (

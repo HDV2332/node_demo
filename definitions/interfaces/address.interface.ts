@@ -1,5 +1,5 @@
 export interface IAddress {
-  id: Number;
+  address_id: Number;
   address: String;
   address2?: String;
   district: String;

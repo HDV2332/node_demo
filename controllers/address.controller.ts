@@ -1,4 +1,6 @@
 import { ERRORS } from "../definitions/errors";
+import { getCurrentTimestamp, getRandomLocation } from "../helpers";
+import { validateRequiredFieldsPayload } from "../helpers/validate";
 
 const Address = require("../models/address.model");
 
@@ -9,20 +11,35 @@ exports.create = (request: any, response: any) => {
     });
   }
 
-  //create address
-  const address = new Address({
-    id: new Date().getTime(),
-    address: "String",
-    address2: "String",
-    district: "String",
-    city_id: "",
-    postal_code: "string",
-    phone: "string",
-    location: "string",
-    last_update: "string",
-  });
+  const validate = validateRequiredFieldsPayload(request?.body, [
+    "address",
+    "district",
+    "city_id",
+    "phone",
+  ]);
 
-  Address.create(address, (error: any, data: any) => {
+  if (!validate.status) {
+    response.status(400).send({
+      status: 400,
+      message: `${validate.field || ""} is required`,
+    });
+  }
+
+  //create address
+  const _address = new Address({
+    address_id: new Date().getTime(),
+    address: request.body.address,
+    address2: request.body.address2 || null,
+    district: request.body.district,
+    city_id: request.body.city_id,
+    postal_code: request.body.postal_code || null,
+    phone: request.body.phone,
+    location: getRandomLocation(),
+    last_update: getCurrentTimestamp(),
+  });
+  console.log({ body: request.body, _address });
+
+  Address.create(_address, (error: any, data: any) => {
     if (error) {
       response.status(500).send({
         message: error.message || ERRORS.unexpected,
