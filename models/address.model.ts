@@ -43,21 +43,29 @@ AddressContrustor.getAll = (
   result: any
 ) => {
   const { limit, page, string } = request;
-  let _sql = `SELECT * FROM address`;
+  let mainSql = `SELECT * FROM address`;
   if (string) {
-    _sql += ` WHERE address LIKE '%${string}%' OR address2 LIKE '%${string}%' OR district LIKE '%${string}%'`;
+    mainSql += ` WHERE address LIKE '%${string}%' OR address2 LIKE '%${string}%' OR district LIKE '%${string}%'`;
   }
   const sort = ` ORDER BY address_id DESC LIMIT ${limit} OFFSET ${
     (page - 1) * 10
   } `;
 
-  database.query(_sql + sort, (err: any, res: any) => {
-    if (err) {
-      result(err, null);
-      return;
+  const countTotalSql = "SELECT COUNT(*) as total FROM address";
+
+  database.query(
+    `${mainSql + sort}; ${countTotalSql}`,
+    (err: any, res: any) => {
+      if (err) {
+        result(err, null);
+        return;
+      }
+      result(null, {
+        addresses: res[0],
+        total: res[1]?.total || 0,
+      });
     }
-    result(null, res);
-  });
+  );
 };
 
 AddressContrustor.getById = (id: string, result: any) => {
